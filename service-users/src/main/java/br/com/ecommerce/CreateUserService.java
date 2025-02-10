@@ -1,17 +1,16 @@
 package br.com.ecommerce;
 
-import br.com.ecommerce.consumer.KafkaService;
+import br.com.ecommerce.consumer.ConsumerService;
+import br.com.ecommerce.consumer.ServiceRunner;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
-public class CreateUserService {
+import java.util.UUID;
+
+public class CreateUserService implements ConsumerService<Order> {
 
     private final Connection connection;
 
@@ -28,17 +27,11 @@ public class CreateUserService {
     }
 
 
-    public static void main(String[] args) throws SQLException, ExecutionException, InterruptedException {
-        var createUserService = new CreateUserService();
-        try(var service = new KafkaService<>(CreateUserService.class.getSimpleName(),
-                "ECOMMERCE_NEW_ORDER",
-                createUserService::parse,
-                Map.of())) {
-            service.run();
-        }
+    public static void main(String[] args)  {
+        new ServiceRunner<>(CreateUserService::new).start(1);
     }
 
-    private void parse(ConsumerRecord<String, Message<Order>> record) throws SQLException {
+    public void parse(ConsumerRecord<String, Message<Order>> record) throws SQLException {
         System.out.println("----------------------------------------------------------------------------------------");
         System.out.println("processing new order, checking for new user");
         System.out.println(record.value());
@@ -47,6 +40,16 @@ public class CreateUserService {
         if (isNewUser(order.getEmail())) {
             insertNewUser(order.getEmail());
         }
+    }
+
+    @Override
+    public String getTopic() {
+        return "ECOMMERCE_NEW_ORDER";
+    }
+
+    @Override
+    public String getConsumerGroup() {
+        return CreateUserService.class.getSimpleName();
     }
 
     private void insertNewUser(String email) throws SQLException {
