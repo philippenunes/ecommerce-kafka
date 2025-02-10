@@ -2,6 +2,7 @@ package br.com.ecommerce.consumer;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 public class ServiceProvider<T> implements Callable<Void> {
 
@@ -12,7 +13,7 @@ public class ServiceProvider<T> implements Callable<Void> {
     }
 
     @Override
-    public Void call() throws Exception {
+    public Void call() throws ExecutionException, InterruptedException {
         var myService = factory.create();
 
         try (var service = new KafkaService<>(myService.getConsumerGroup(),
