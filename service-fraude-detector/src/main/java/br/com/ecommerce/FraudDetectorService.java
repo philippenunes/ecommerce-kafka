@@ -38,6 +38,7 @@ public class FraudDetectorService implements ConsumerService<Order> {
 
         if (wasProcessed(order)) {
             System.out.println("order " + order.getOrderId() + " was already processed");
+            return;
         }
 
         try {
